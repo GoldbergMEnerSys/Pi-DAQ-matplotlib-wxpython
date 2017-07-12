@@ -15,6 +15,10 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
 import matplotlib.pyplot as plt    
 
+
+global isPaused
+isPaused = True
+
 #main frame of program (whole interface including graph) 
 class frame(wx.Frame):
     def __init__(self,parent,title):
@@ -68,7 +72,17 @@ class frame(wx.Frame):
 
     #starts or stops the timer
     def startStop(self,event):
-        self.timer.Start(1000)    
+	global isPaused
+
+	if(isPaused):
+        	self.timer.Start(1000)
+		isPaused = False
+		print "start"   
+	else:
+		self.timer.Stop() 
+		isPaused = True
+		print "stop"
+
 
 #the graph for DAQ data 
 class graph(wx.Panel):
