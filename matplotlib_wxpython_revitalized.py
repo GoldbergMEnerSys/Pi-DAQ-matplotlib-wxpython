@@ -1,7 +1,7 @@
 
 """
-Mark Goldberg at EnerSys
-Help from Mr. Brian Venus
+M Goldberg at EnerSys
+Help from Mr. Venus
  
 """
  
@@ -33,7 +33,7 @@ global data
 data = deque([])
 
 global maxPoints
-maxPoints = 10
+maxPoints = 5sa0
 
 #main frame of program (whole interface including graph) 
 class frame(wx.Frame):
