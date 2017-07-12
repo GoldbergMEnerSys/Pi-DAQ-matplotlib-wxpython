@@ -32,6 +32,9 @@ numPoints=0
 global data
 data = deque([])
 
+global maxPoints
+maxPoints = 10
+
 #main frame of program (whole interface including graph) 
 class frame(wx.Frame):
     def __init__(self,parent,title):
@@ -85,14 +88,16 @@ class frame(wx.Frame):
 	global xLocations
 	global data
 	global numPoints
+	global maxPoints
 
 	xLocations.append(numPoints)
 	data.append(0)
 
-	print data
-	print xLocations
-
 	numPoints += 1
+
+	if(numPoints > maxPoints):
+		data.popleft()
+		xLocations.popleft()
 
 	self.graph.plot()
 
@@ -125,15 +130,23 @@ class graph(wx.Panel):
         self.toolbar.Hide()
      
     def plot(self):
-        ''' plot some random stuff '''
-        #data = [random.random() for i in range(25)]
         ax = self.figure.add_subplot(111)
+
+	ax.set_xlabel('Time')
+	ax.set_ylabel('Volts')
+
+	ax.set_title('DAQ Data')
+	ax.axis('tight')
 
 	print data
 	print xLocations
 
-        ax.plot(xLocations, data, '*-')
-        self.canvas.draw()    
+        lines = ax.plot(xLocations, data, '*-')
+        self.canvas.draw()
+
+	myLines=lines.pop(0)
+	myLines.remove()
+	del myLines    
    
 
 #controlling code
