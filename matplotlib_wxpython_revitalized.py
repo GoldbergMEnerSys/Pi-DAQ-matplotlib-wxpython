@@ -15,9 +15,22 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
 import matplotlib.pyplot as plt    
 
+from collections import deque
 
 global isPaused
 isPaused = True
+
+global timerInterval
+timerInterval = 1000
+
+global xLocations
+xLocations = deque([])
+
+global numPoints
+numPoints=0
+
+global data
+data = deque([])
 
 #main frame of program (whole interface including graph) 
 class frame(wx.Frame):
@@ -64,18 +77,32 @@ class frame(wx.Frame):
  
     #plots graph
     def plot(self,event):
-        self.p1.plot()  
+        self.graph.plot()  
 
     #when timer goes off
     def addPoint(self, event):
-	print "timer off"  
+	print "timer off" 
+	global xLocations
+	global data
+	global numPoints
+
+	xLocations.append(numPoints)
+	data.append(0)
+
+	print data
+	print xLocations
+
+	numPoints += 1
+
+	self.graph.plot()
 
     #starts or stops the timer
     def startStop(self,event):
 	global isPaused
+	global timerInterval
 
 	if(isPaused):
-        	self.timer.Start(1000)
+        	self.timer.Start(timerInterval)
 		isPaused = False
 		print "start"   
 	else:
@@ -86,6 +113,9 @@ class frame(wx.Frame):
 
 #the graph for DAQ data 
 class graph(wx.Panel):
+
+    global xLocations
+
     def __init__(self,parent):
         wx.Panel.__init__(self, parent)
         self.figure = plt.figure()
@@ -96,10 +126,13 @@ class graph(wx.Panel):
      
     def plot(self):
         ''' plot some random stuff '''
-        data = [random.random() for i in range(25)]
+        #data = [random.random() for i in range(25)]
         ax = self.figure.add_subplot(111)
-        ax.hold(False)
-        ax.plot(data, '*-')
+
+	print data
+	print xLocations
+
+        ax.plot(xLocations, data, '*-')
         self.canvas.draw()    
    
 
