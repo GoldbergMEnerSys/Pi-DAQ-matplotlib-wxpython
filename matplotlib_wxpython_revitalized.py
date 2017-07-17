@@ -15,6 +15,9 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
 import matplotlib.pyplot as plt    
 
+#to get/ send data through command line
+import subprocess
+
 from collections import deque
 
 global isPaused
@@ -33,7 +36,7 @@ global data
 data = deque([])
 
 global maxPoints
-maxPoints = 5sa0
+maxPoints = 50
 
 #main frame of program (whole interface including graph) 
 class frame(wx.Frame):
@@ -77,6 +80,7 @@ class frame(wx.Frame):
     #submits number of DAQ (or will when I add that)
     def submit(self,event):
         print "lorem ipsum"
+        self.getDaqData()
  
     #plots graph
     def plot(self,event):
@@ -115,6 +119,11 @@ class frame(wx.Frame):
 		isPaused = True
 		print "stop"
 
+    def getDaqData(self):
+        proc = subprocess.Popen("cd ~/Linux_Drivers-master/USB/mcc-libusb ; ./test-usb1608FS", shell = True, stdout=subprocess.PIPE)
+
+        for line in proc.stdout:
+            print line
 
 #the graph for DAQ data 
 class graph(wx.Panel):
