@@ -40,7 +40,7 @@ int toContinue()
   return ( answer == 'y' || answer == 'Y');
 }
 
-int main (int argc, char **argv) 
+int main (int argc, char *argv[]) 
 {
   int flag;
   signed short svalue;
@@ -51,8 +51,14 @@ int main (int argc, char **argv)
 
   int ret;
   Calibration_AIN table_AIN[NGAINS_USB1608FS][NCHAN_USB1608FS];
+
+  int toSkip;
    
-  int toSkip = 1;
+  if(argv[1] != NULL){
+  	toSkip = atoi(argv[1]);
+  } else {
+	toSkip = 0;
+  }
 
   ret = libusb_init(NULL);
   if (ret < 0) {
