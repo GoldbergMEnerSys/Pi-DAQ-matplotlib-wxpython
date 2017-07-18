@@ -27,7 +27,7 @@ global isPaused
 isPaused = True
 
 global timerInterval
-timerInterval = 1000
+timerInterval = 1500
 
 global xLocations
 xLocations = deque([])
@@ -41,7 +41,7 @@ for i in range(0, DaqNum*8):
     data.append(deque([]))
 
 global maxPoints
-maxPoints = 50
+maxPoints = 10
 
 #main frame of program (whole interface including graph) 
 class frame(wx.Frame):
@@ -92,7 +92,7 @@ class frame(wx.Frame):
 
     #when timer goes off
     def addPoint(self, event):
-	print "timer off" 
+	#print "timer off" 
 	global xLocations
 	global data
 	global numPoints
@@ -106,21 +106,25 @@ class frame(wx.Frame):
         currentChannel = 0
         for line in proc.stdout:
             #print line
+            #print xLocations[0]+currentChannel
             data[currentChannel].append(line)
+
+            if(numPoints > maxPoints):
+            	    data[currentChannel].popleft()
             #print line
-            print data[currentChannel]
-            print xLocations
-            print "boing"
+            #print data[currentChannel]
+            #print "boing"
             currentChannel +=1
 
-        print data[0]    
+        #print data[0]
+
+        if(numPoints > maxPoints):
+	    xLocations.popleft()    
 
 
 	numPoints += 1
 
-	if(numPoints > maxPoints):
-		data.popleft()
-		xLocations.popleft()
+	
 
 	self.graph.plot()
 
@@ -165,14 +169,21 @@ class graph(wx.Panel):
 	#print xLocations
 
         for i in range(0, DaqNum*8):
-            print data[i]
-            lines = ax.plot(xLocations, data[i], '*-')
+            #print data[i]
+            lines = ax.plot(xLocations, data[i], '*-', label='line')
+
+        plt.legend()
             
         self.canvas.draw()
 
-	myLines=lines.pop(0)
-	myLines.remove()
-	del myLines    
+        ax.cla()
+
+        #lines.pop(0).remove()
+        #del lines
+
+	#myLines=lines.pop(0)
+	#myLines.remove()
+	#del myLines    
    
 
 #controlling code
