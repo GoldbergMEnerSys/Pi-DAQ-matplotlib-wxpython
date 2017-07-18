@@ -72,12 +72,20 @@ class frame(wx.Frame):
         self.btnSubmit.Bind(wx.EVT_BUTTON,self.submit)
         
 	#random button for testing
-        self.btnHi = wx.Button(self.gui,-1,"Hi", size=(40,40),pos=(500,10))
+        self.btnHi = wx.Button(self.gui,-1,"Hi", size=(40,40),pos=(350,10))
         self.btnHi.Bind(wx.EVT_BUTTON,self.hi)
 
 	#when timer goes off add points
 	self.timer=wx.Timer(self)
 	self.Bind(wx.EVT_TIMER, self.addPoint)
+
+	#text box for user to insert what to set digipot to
+        self.txtDigipot = wx.TextCtrl(self.gui, size =(100,40), pos = (400,10))
+
+        #button to submit data in txtDigipot to digipot
+        self.btnDigipot = wx.Button(self.gui, label = "Send to Digipot", size = (110,40), pos = (520, 10))
+        self.btnDigipot.Bind(wx.EVT_BUTTON, lambda event: self.toDigipot(wx.EVT_BUTTON, self.txtDigipot.GetValue()), self.btnDigipot)
+
          
     #random test method
     def hi(self,event):
@@ -90,6 +98,20 @@ class frame(wx.Frame):
         for i in range(0, (int(numDaq))*8):
             data.append(deque([]))
             #print "deque added"
+
+    #writes to digipot and then reads to make sure changed.  result printed
+    def toDigipot(self, event, valToWrite):
+
+        try:
+            int(valToWrite)
+            proc = subprocess.Popen("./i2cDigipot2 %s"%valToWrite, shell = True, stdout=subprocess.PIPE)
+
+            for line in proc.stdout:
+               print line
+
+
+        except ValueError:
+            print "Plese only input numbers"        
  
     #plots graph
     def plot(self,event):
