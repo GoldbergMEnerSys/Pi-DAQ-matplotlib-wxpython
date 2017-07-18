@@ -20,10 +20,6 @@ import subprocess
 
 from collections import deque
 
-#number of DAQ to collect and display data from
-global DaqNum
-DaqNum = 1
-
 global isPaused
 isPaused = True
 
@@ -42,8 +38,10 @@ numPoints=0
 #a deque of the daq data
 global data
 data = deque([])
-for i in range(0, DaqNum*8):
-    data.append(deque([]))
+
+#number of DAQ
+global numDaq
+numDaq = 0
 
 #number of points per line before start removing oldest ones
 global maxPoints
@@ -87,7 +85,10 @@ class frame(wx.Frame):
     
     #submits number of DAQ (or will when I add that)
     def submit(self,event):
-        print "lorem ipsum"
+        global numDaq
+        numDaq = self.txtDaqNum.GetValue()
+        for i in range(0, (int(numDaq))*8):
+            data.append(deque([]))
  
     #plots graph
     def plot(self,event):
@@ -101,12 +102,16 @@ class frame(wx.Frame):
 	global data
 	global numPoints
 	global maxPoints
+	global numDaq
 
         #put the x coordinate of the next point on the deque.
 	xLocations.append(numPoints)
 
+        commandString = 'cd ~/Linux_Drivers-master/USB/mcc-libusb ; ./test-usb1608FS ' + numDaq
+        #print commandString
+
         #call for daq data
-	proc = subprocess.Popen("cd ~/Linux_Drivers-master/USB/mcc-libusb ; ./test-usb1608FS", shell = True, stdout=subprocess.PIPE)
+	proc = subprocess.Popen(commandString, shell = True, stdout=subprocess.PIPE)
 
         #puts data in data deque (also removes if too many)
         try:
@@ -185,7 +190,7 @@ class graph(wx.Panel):
         #print xLocations
 
         #makes lines based on the deques
-        for i in range(0, DaqNum*8):
+        for i in range(0, (int(numDaq))*8):
             lines = ax.plot(xLocations, data[i], '*-', label='line')
 
         plt.legend()
