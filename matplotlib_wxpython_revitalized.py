@@ -89,6 +89,7 @@ class frame(wx.Frame):
         numDaq = self.txtDaqNum.GetValue()
         for i in range(0, (int(numDaq))*8):
             data.append(deque([]))
+            #print "deque added"
  
     #plots graph
     def plot(self,event):
@@ -107,14 +108,15 @@ class frame(wx.Frame):
         #put the x coordinate of the next point on the deque.
 	xLocations.append(numPoints)
 
-        commandString = 'cd ~/Linux_Drivers-master/USB/mcc-libusb ; ./test-usb1608FS ' + numDaq
+        commandString = 'cd ~/Linux_Drivers-master/USB/mcc-libusb ; ./test-usb1608FS ' + str(int(numDaq)-1)
         #print commandString
 
         #call for daq data
 	proc = subprocess.Popen(commandString, shell = True, stdout=subprocess.PIPE)
 
         #puts data in data deque (also removes if too many)
-        try:
+        #try:
+	if True:
             currentChannel = 0
         
             for line in proc.stdout:
@@ -129,8 +131,8 @@ class frame(wx.Frame):
                 #print "boing"
                 currentChannel +=1
 
-        except:
-            print "error: somethihng or other"
+        #except:
+            #print "error: somethihng or other"
 
         #print data[0]
 
