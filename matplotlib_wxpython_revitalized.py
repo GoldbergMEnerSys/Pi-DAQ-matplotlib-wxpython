@@ -20,26 +20,32 @@ import subprocess
 
 from collections import deque
 
+#number of DAQ to collect and display data from
 global DaqNum
 DaqNum = 1
 
 global isPaused
 isPaused = True
 
+#interval between adding points
 global timerInterval
-timerInterval = 1500
+timerInterval = 2500
 
+#a deque of the x coordinates for the data
 global xLocations
 xLocations = deque([])
 
+#the number of points per line currently
 global numPoints
 numPoints=0
 
+#a deque of the daq data
 global data
 data = deque([])
 for i in range(0, DaqNum*8):
     data.append(deque([]))
 
+#number of points per line before start removing oldest ones
 global maxPoints
 maxPoints = 10
 
@@ -55,9 +61,6 @@ class frame(wx.Frame):
         self.gui = wx.Panel(self.sp,style=wx.SUNKEN_BORDER)
          
         self.sp.SplitHorizontally(self.graph,self.gui,470)
- 
-        self.statusbar = self.CreateStatusBar()
-        self.statusbar.SetStatusText("fghLJSDDGAKLJGSDLAJ")
          
 	#starts or stops timer (timer goes off when add point)
         self.btnStart = wx.Button(self.gui,-1,"Start/Stop", size=(80,40),pos=(50,10))
@@ -92,32 +95,41 @@ class frame(wx.Frame):
 
     #when timer goes off
     def addPoint(self, event):
-	#print "timer off" 
+	#print "timer off"
+        
 	global xLocations
 	global data
 	global numPoints
 	global maxPoints
 
+        #put the x coordinate of the next point on the deque.
 	xLocations.append(numPoints)
 
-
+        #call for daq data
 	proc = subprocess.Popen("cd ~/Linux_Drivers-master/USB/mcc-libusb ; ./test-usb1608FS", shell = True, stdout=subprocess.PIPE)
 
-        currentChannel = 0
-        for line in proc.stdout:
-            #print line
-            #print xLocations[0]+currentChannel
-            data[currentChannel].append(line)
+        #puts data in data deque (also removes if too many)
+        try:
+            currentChannel = 0
+        
+            for line in proc.stdout:
+                #print line
+                #print xLocations[0]+currentChannel
+                data[currentChannel].append(line)
 
-            if(numPoints > maxPoints):
+                if(numPoints > maxPoints):
             	    data[currentChannel].popleft()
-            #print line
-            #print data[currentChannel]
-            #print "boing"
-            currentChannel +=1
+                #print line
+                #print data[currentChannel]
+                #print "boing"
+                currentChannel +=1
+
+        except:
+            print "error: somethihng or other"
 
         #print data[0]
 
+        #removes x coordinate if too many
         if(numPoints > maxPoints):
 	    xLocations.popleft()    
 
@@ -127,6 +139,7 @@ class frame(wx.Frame):
 	
 
 	self.graph.plot()
+
 
     #starts or stops the timer
     def startStop(self,event):
@@ -147,8 +160,6 @@ class frame(wx.Frame):
 #the graph for DAQ data 
 class graph(wx.Panel):
 
-    global xLocations
-
     def __init__(self,parent):
         wx.Panel.__init__(self, parent)
         self.figure = plt.figure()
@@ -158,24 +169,30 @@ class graph(wx.Panel):
         self.toolbar.Hide()
      
     def plot(self):
+
+        global xLocations
+        
         ax = self.figure.add_subplot(111)
 
 	ax.set_xlabel('Time')
 	ax.set_ylabel('Volts')
 
 	ax.set_title('DAQ Data')
-	ax.axis('tight')
+	plt.autoscale(enable=True, axis='x', tight=True)
 
 	#print xLocations
 
+        #print xLocations
+
+        #makes lines based on the deques
         for i in range(0, DaqNum*8):
-            #print data[i]
             lines = ax.plot(xLocations, data[i], '*-', label='line')
 
         plt.legend()
             
         self.canvas.draw()
 
+        #clears lines in axis so still see old lines below new ones
         ax.cla()
 
         #lines.pop(0).remove()
