@@ -20,6 +20,9 @@ import subprocess
 
 from collections import deque
 
+global DaqNum
+DaqNum = 1
+
 global isPaused
 isPaused = True
 
@@ -34,6 +37,8 @@ numPoints=0
 
 global data
 data = deque([])
+for i in range(0, DaqNum*8):
+    data.append(deque([]))
 
 global maxPoints
 maxPoints = 50
@@ -80,7 +85,6 @@ class frame(wx.Frame):
     #submits number of DAQ (or will when I add that)
     def submit(self,event):
         print "lorem ipsum"
-        self.getDaqData()
  
     #plots graph
     def plot(self,event):
@@ -95,7 +99,22 @@ class frame(wx.Frame):
 	global maxPoints
 
 	xLocations.append(numPoints)
-	data.append(0)
+
+
+	proc = subprocess.Popen("cd ~/Linux_Drivers-master/USB/mcc-libusb ; ./test-usb1608FS", shell = True, stdout=subprocess.PIPE)
+
+        currentChannel = 0
+        for line in proc.stdout:
+            #print line
+            data[currentChannel].append(line)
+            #print line
+            print data[currentChannel]
+            print xLocations
+            print "boing"
+            currentChannel +=1
+
+        print data[0]    
+
 
 	numPoints += 1
 
@@ -119,11 +138,7 @@ class frame(wx.Frame):
 		isPaused = True
 		print "stop"
 
-    def getDaqData(self):
-        proc = subprocess.Popen("cd ~/Linux_Drivers-master/USB/mcc-libusb ; ./test-usb1608FS", shell = True, stdout=subprocess.PIPE)
 
-        for line in proc.stdout:
-            print line
 
 #the graph for DAQ data 
 class graph(wx.Panel):
@@ -147,10 +162,12 @@ class graph(wx.Panel):
 	ax.set_title('DAQ Data')
 	ax.axis('tight')
 
-	print data
-	print xLocations
+	#print xLocations
 
-        lines = ax.plot(xLocations, data, '*-')
+        for i in range(0, DaqNum*8):
+            print data[i]
+            lines = ax.plot(xLocations, data[i], '*-')
+            
         self.canvas.draw()
 
 	myLines=lines.pop(0)
