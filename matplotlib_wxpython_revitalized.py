@@ -22,7 +22,7 @@ isPaused = True
 
 #interval between adding points
 global timerInterval
-timerInterval = 2000
+timerInterval = 3000
 
 #a deque of the x coordinates for the data
 global xLocations
@@ -48,6 +48,9 @@ numDaq = 0
 global numChannel
 numChannel = 8
 
+global numTab
+numTab = 1
+
 
 #main frame of program (whole interface including graph) 
 class frame(wx.Frame):
@@ -69,31 +72,30 @@ class frame(wx.Frame):
 
 
         
-        notebook=myNotebook(self.gui)
+        self.notebook=myNotebook(self.gui)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(notebook, 1, wx.ALL|wx.EXPAND, 5)
+        sizer.Add(self.notebook, 1, wx.ALL|wx.EXPAND, 5)
         self.gui.SetSizer(sizer)
 
          
     #when timer goes off
     def addPoint(self, event):
 	#print "timer off"
-        
-	global xLocations
-	global data
-	global numPoints
-	global maxPoints
-	global numDaq
+        global xLocations
+        global data
+        global numPoints
+        global maxPoints
+        global numDaq
 
         #put the x coordinate of the next point on the deque.
-	xLocations.append(numPoints)
+        xLocations.append(numPoints)
 
         commandString = 'cd ~/Linux_Drivers-master/USB/mcc-libusb ; ./test-usb1608FS ' + str(int(numDaq)-1)
         #print commandString
 
         #call for daq data
-	proc = subprocess.Popen(commandString, shell = True, stdout=subprocess.PIPE)
+        proc = subprocess.Popen(commandString, shell = True, stdout=subprocess.PIPE)
 
         #puts data in data deque (also removes if too many)
         try:
@@ -103,8 +105,8 @@ class frame(wx.Frame):
                 xLocations.popleft() 
                 for line in proc.stdout:
                     data[currentChannel].append(line)
-            	    data[currentChannel].popleft()
-            	    currentChannel +=1
+                    data[currentChannel].popleft()
+                    currentChannel +=1
 
             else:
                 for line in proc.stdout:
@@ -115,9 +117,9 @@ class frame(wx.Frame):
             print "Error getting data"
 	       
 
-	numPoints += 1
+        numPoints += 1
 
-	self.graph.plot()
+        frame.graph.plot()
 
 
 #collection of tabs
@@ -125,11 +127,52 @@ class myNotebook(wx.Notebook):
     def __init__(self,parent):
         wx.Notebook.__init__(self,parent)
 
+        self.tabDeque = deque([])
+
         tab1 = myTab(self)
         self.AddPage(tab1, "Tab 1")
 
-        tab2 = myTab(self)
-        self.AddPage(tab2, "Tab 2")
+        #self.tabDeque.append(tab1)
+
+        #tab2 = myTab(self)
+
+
+        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self.OnPageChanging)
+
+    def OnPageChanging(self, event):
+
+        try:
+            newTab = event.EventObject.GetChildren()[event.Selection]
+            oldTab = event.EventObject.GetChildren()[event.OldSelection]
+            global data
+            global xLocations
+            global numPoints
+            global numDaq
+            global isPaused
+
+            #print "this is good. " + str(oldTab)+" -> " + str(newTab.GetName)
+
+            oldTab.tabData = data
+            oldTab.tabXLocations = xLocations
+            oldTab.tabNumPoints = numPoints
+            oldTab.tabNumDaq = numDaq
+
+            data = newTab.tabData
+            xLocations = newTab.tabXLocations
+            numPoints = newTab.tabNumPoints
+            numDaq = newTab.tabNumDaq
+
+            frame.timer.Stop()
+            isPaused = True
+            print "stop"
+
+            frame.graph.plot()
+
+            event.Skip()
+
+        except:
+            print "error or prgram quit"
+        
 
 
 #each tab panel
@@ -138,27 +181,27 @@ class myTab(wx.Panel):
         wx.Panel.__init__(self,parent=parent, id=wx.ID_ANY)
 
         #a deque of the x coordinates for the data collected for the tab
-        tabXLocations = deque([])
+        self.tabXLocations = deque([])
 
         #a deque of the daq data collected for the tab
-        tabData = deque([])
+        self.tabData = deque([])
 
         #the number of points per line currently on that tab
-        numPoints=0
+        self.tabNumPoints=0
 
         #number of DAQ desired for the tab
-        numDaq = 0
+        self.tabNumDaq = 0
 
         #text box to enter the number of DAQ attached
-	self.txtDaqNum = wx.TextCtrl(self, -1, pos=(175,10), size=(70,40))
+        self.txtDaqNum = wx.TextCtrl(self, -1, pos=(265,10), size=(70,40))
 	
 	#submits number of daq's in the txtDaqNum
-        self.btnSubmit = wx.Button(self,-1,"Submit Nuber of DAQ", size=(160,40),pos=(10,10))
+        self.btnSubmit = wx.Button(self,-1,"Submit Nuber of DAQ", size=(160,40),pos=(100,10))
         self.btnSubmit.Bind(wx.EVT_BUTTON,self.submit)
 
 	#random button for testing
-        self.btnHi = wx.Button(self,-1,"Hi", size=(40,40),pos=(300,10))
-        self.btnHi.Bind(wx.EVT_BUTTON,self.hi)
+        #self.btnHi = wx.Button(self,-1,"Hi", size=(40,40),pos=(300,10))
+        #self.btnHi.Bind(wx.EVT_BUTTON,self.hi)
 
 	#text box for user to insert what to set digipot to
         self.txtDigipot = wx.TextCtrl(self, size =(100,40), pos = (515,10))
@@ -167,10 +210,21 @@ class myTab(wx.Panel):
         self.btnDigipot = wx.Button(self, label = "Send to Digipot", size = (110,40), pos = (400, 10))
         self.btnDigipot.Bind(wx.EVT_BUTTON, lambda event: self.toDigipot(wx.EVT_BUTTON, self.txtDigipot.GetValue()), self.btnDigipot)
 
+	#adds new tab
+        self.btnNewTab = wx.Button(self,-1,"New Tab", size=(80,40),pos=(10,10))
+        self.btnNewTab.Bind(wx.EVT_BUTTON,self.newTab)
          
     #random test method
     def hi(self,event):
         print "Hi"
+
+    #adds new tab
+    def newTab(self, event):
+        global numTab
+        
+        numTab += 1
+        frame.notebook.AddPage(myTab(frame.notebook), "Tab " + str(numTab))
+        
     
     #submits number of DAQ
     def submit(self,event):
@@ -189,7 +243,7 @@ class myTab(wx.Panel):
             self.txtDaqNum.SetEditable(False)
 
             #starts or stops timer (timer goes off when add point)
-            self.btnStart = wx.Button(self,-1,"Start/Stop", size=(80,40),pos=(50,10))
+            self.btnStart = wx.Button(self,-1,"Start/Stop", size=(80,40),pos=(160,10))
             self.btnStart.Bind(wx.EVT_BUTTON,self.startStop)
 
         except ValueError:
@@ -213,17 +267,17 @@ class myTab(wx.Panel):
 
     #starts or stops the timer
     def startStop(self,event):
-	global isPaused
-	global timerInterval
+        global isPaused
+        global timerInterval
 
-	if(isPaused):
+        if(isPaused):
         	frame.timer.Start(timerInterval)
-		isPaused = False
-		print "start"   
-	else:
-		frame.timer.Stop() 
-		isPaused = True
-		print "stop"
+        	isPaused = False
+        	print "start"
+        else:
+                frame.timer.Stop()
+                isPaused = True
+                print "stop"
 
 
 #the graph for DAQ data 
@@ -243,23 +297,23 @@ class graph(wx.Panel):
         #make ax global and move into _init_?
         ax = self.figure.add_subplot(111)
 
-	ax.set_xlabel('Time')
-	ax.set_ylabel('Volts')
+        ax.set_xlabel('Time')
+        ax.set_ylabel('Volts')
 
-	ax.set_title('DAQ Data')
+        ax.set_title('DAQ Data')
 
 	#removes whitespace along x axis
-	plt.autoscale(enable=True, axis='x', tight=True)
+        plt.autoscale(enable=True, axis='x', tight=True)
 
 	#print xLocations
 
         #makes lines based on the deques
-	try:
+        if True: #try:
             for i in range(0, (int(numDaq))*8):
                 lines = ax.plot(xLocations, data[i], '*-', label=str(i+1))
             
-        except:
-            print "error graphing data"
+        #except:
+            #print "error graphing data"
         
         #makes key for graph
         plt.legend(bbox_to_anchor=(1,1), loc=2, borderaxespad=0., fontsize = 10, title="Data")
@@ -269,7 +323,7 @@ class graph(wx.Panel):
         #clears lines in axis so still see old lines below new ones
         ax.cla()
 
-	'''myLines=lines.pop(0)
+        '''myLines=lines.pop(0)
 	#myLines.remove()
 	#del myLines'''    
    
