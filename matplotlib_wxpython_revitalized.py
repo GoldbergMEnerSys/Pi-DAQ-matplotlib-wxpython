@@ -22,7 +22,7 @@ isPaused = True
 
 #interval between adding points
 global timerInterval
-timerInterval = 2500
+timerInterval = 2000
 
 #a deque of the x coordinates for the data
 global xLocations
@@ -61,89 +61,21 @@ class frame(wx.Frame):
         self.gui = wx.Panel(self.sp)
          
         self.sp.SplitHorizontally(self.graph,self.gui,470)
+
+
+        #when timer goes off add points
+        self.timer=wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.addPoint)
+
+
         
-         
-	#text box to enter the number of DAQ attached
-	self.txtDaqNum = wx.TextCtrl(self.gui, -1, pos=(175,10), size=(70,40))
-	
-	#submits number of daq's in the txtDaqNum
-        self.btnSubmit = wx.Button(self.gui,-1,"Submit Nuber of DAQ", size=(160,40),pos=(10,10))
-        self.btnSubmit.Bind(wx.EVT_BUTTON,self.submit)
+        notebook=myNotebook(self.gui)
 
-	#random button for testing
-        self.btnHi = wx.Button(self.gui,-1,"Hi", size=(40,40),pos=(300,10))
-        self.btnHi.Bind(wx.EVT_BUTTON,self.hi)
-
-	#when timer goes off add points
-	self.timer=wx.Timer(self)
-	self.Bind(wx.EVT_TIMER, self.addPoint)
-
-	#text box for user to insert what to set digipot to
-        self.txtDigipot = wx.TextCtrl(self.gui, size =(100,40), pos = (515,10))
-
-        #button to submit data in txtDigipot to digipot
-        self.btnDigipot = wx.Button(self.gui, label = "Send to Digipot", size = (110,40), pos = (400, 10))
-        self.btnDigipot.Bind(wx.EVT_BUTTON, lambda event: self.toDigipot(wx.EVT_BUTTON, self.txtDigipot.GetValue()), self.btnDigipot)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(notebook, 1, wx.ALL|wx.EXPAND, 5)
+        self.gui.SetSizer(sizer)
 
          
-    #random test method
-    def hi(self,event):
-        print "Hi"
-    
-    #submits number of DAQ
-    def submit(self,event):
-        global numDaq
-        global numChannel
-        numDaq = self.txtDaqNum.GetValue()
-        
-        #makes a deque for each of the channels (each daq I'm using has 8)
-        try:
-            
-            for i in range(0, (int(numDaq))*numChannel):
-                data.append(deque([]))
-
-            #removes button and disable changing the txtbox to keep the user from trying to re-submit
-            self.btnSubmit.Destroy()
-            self.txtDaqNum.SetEditable(False)
-
-            #starts or stops timer (timer goes off when add point)
-            self.btnStart = wx.Button(self.gui,-1,"Start/Stop", size=(80,40),pos=(50,10))
-            self.btnStart.Bind(wx.EVT_BUTTON,self.startStop)
-
-        except ValueError:
-            print "Plese only input numbers" 
-        
-       
-
-    #writes to digipot and then reads to make sure changed.  result printed
-    def toDigipot(self, event, valToWrite):
-
-        #writes to digipot and prints out what it was set to
-        try:
-            int(valToWrite)
-            proc = subprocess.Popen("./i2cDigipot2 %s"%valToWrite, shell = True, stdout=subprocess.PIPE)
-
-            for line in proc.stdout:
-               print line
-
-        except ValueError:
-            print "Plese only input numbers"          
-
-    #starts or stops the timer
-    def startStop(self,event):
-	global isPaused
-	global timerInterval
-
-	if(isPaused):
-        	self.timer.Start(timerInterval)
-		isPaused = False
-		print "start"   
-	else:
-		self.timer.Stop() 
-		isPaused = True
-		print "stop"
-
-
     #when timer goes off
     def addPoint(self, event):
 	#print "timer off"
@@ -188,6 +120,111 @@ class frame(wx.Frame):
 	self.graph.plot()
 
 
+#collection of tabs
+class myNotebook(wx.Notebook):
+    def __init__(self,parent):
+        wx.Notebook.__init__(self,parent)
+
+        tab1 = myTab(self)
+        self.AddPage(tab1, "Tab 1")
+
+        tab2 = myTab(self)
+        self.AddPage(tab2, "Tab 2")
+
+
+#each tab panel
+class myTab(wx.Panel):
+    def __init__(self,parent):
+        wx.Panel.__init__(self,parent=parent, id=wx.ID_ANY)
+
+        #a deque of the x coordinates for the data collected for the tab
+        tabXLocations = deque([])
+
+        #a deque of the daq data collected for the tab
+        tabData = deque([])
+
+        #the number of points per line currently on that tab
+        numPoints=0
+
+        #number of DAQ desired for the tab
+        numDaq = 0
+
+        #text box to enter the number of DAQ attached
+	self.txtDaqNum = wx.TextCtrl(self, -1, pos=(175,10), size=(70,40))
+	
+	#submits number of daq's in the txtDaqNum
+        self.btnSubmit = wx.Button(self,-1,"Submit Nuber of DAQ", size=(160,40),pos=(10,10))
+        self.btnSubmit.Bind(wx.EVT_BUTTON,self.submit)
+
+	#random button for testing
+        self.btnHi = wx.Button(self,-1,"Hi", size=(40,40),pos=(300,10))
+        self.btnHi.Bind(wx.EVT_BUTTON,self.hi)
+
+	#text box for user to insert what to set digipot to
+        self.txtDigipot = wx.TextCtrl(self, size =(100,40), pos = (515,10))
+
+        #button to submit data in txtDigipot to digipot
+        self.btnDigipot = wx.Button(self, label = "Send to Digipot", size = (110,40), pos = (400, 10))
+        self.btnDigipot.Bind(wx.EVT_BUTTON, lambda event: self.toDigipot(wx.EVT_BUTTON, self.txtDigipot.GetValue()), self.btnDigipot)
+
+         
+    #random test method
+    def hi(self,event):
+        print "Hi"
+    
+    #submits number of DAQ
+    def submit(self,event):
+        global numDaq
+        global numChannel
+        numDaq = self.txtDaqNum.GetValue()
+        
+        #makes a deque for each of the channels (each daq I'm using has 8)
+        try:
+            
+            for i in range(0, (int(numDaq))*numChannel):
+                data.append(deque([]))
+
+            #removes button and disable changing the txtbox to keep the user from trying to re-submit
+            self.btnSubmit.Destroy()
+            self.txtDaqNum.SetEditable(False)
+
+            #starts or stops timer (timer goes off when add point)
+            self.btnStart = wx.Button(self,-1,"Start/Stop", size=(80,40),pos=(50,10))
+            self.btnStart.Bind(wx.EVT_BUTTON,self.startStop)
+
+        except ValueError:
+            print "Plese only input numbers" 
+        
+       
+
+    #writes to digipot and then reads to make sure changed.  result printed
+    def toDigipot(self, event, valToWrite):
+
+        #writes to digipot and prints out what it was set to
+        try:
+            int(valToWrite)
+            proc = subprocess.Popen("./i2cDigipot2 %s"%valToWrite, shell = True, stdout=subprocess.PIPE)
+
+            for line in proc.stdout:
+               print line
+
+        except ValueError:
+            print "Plese only input numbers"          
+
+    #starts or stops the timer
+    def startStop(self,event):
+	global isPaused
+	global timerInterval
+
+	if(isPaused):
+        	frame.timer.Start(timerInterval)
+		isPaused = False
+		print "start"   
+	else:
+		frame.timer.Stop() 
+		isPaused = True
+		print "stop"
+
 
 #the graph for DAQ data 
 class graph(wx.Panel):
@@ -202,7 +239,8 @@ class graph(wx.Panel):
     def plot(self):
 
         global xLocations
-        
+
+        #make ax global and move into _init_?
         ax = self.figure.add_subplot(111)
 
 	ax.set_xlabel('Time')
