@@ -1,18 +1,15 @@
 
 """
 M Goldberg at EnerSys
-Help from Mr. Venus
- 
+Help from Mr. Venus 
 """
  
  
-#import wx python 
+#this imports wx python 
 import wx
-import random
 
 #import matplotlib stuff 
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
-from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
 import matplotlib.pyplot as plt    
 
 #to get/ send data through command line
@@ -31,21 +28,26 @@ timerInterval = 2500
 global xLocations
 xLocations = deque([])
 
-#the number of points per line currently
-global numPoints
-numPoints=0
-
 #a deque of the daq data
 global data
 data = deque([])
+
+#number of points per line before start removing oldest ones
+global maxPoints
+maxPoints = 100
+
+#the number of points per line currently
+global numPoints
+numPoints=0
 
 #number of DAQ
 global numDaq
 numDaq = 0
 
-#number of points per line before start removing oldest ones
-global maxPoints
-maxPoints = 100
+#number of channels per DAQ
+global numChannel
+numChannel = 8
+
 
 #main frame of program (whole interface including graph) 
 class frame(wx.Frame):
@@ -56,7 +58,7 @@ class frame(wx.Frame):
 	#makes two panels, one for interface and one for graph
         self.sp = wx.SplitterWindow(self)
         self.graph = graph(self.sp)
-        self.gui = wx.Panel(self.sp,style=wx.SUNKEN_BORDER)
+        self.gui = wx.Panel(self.sp)
          
         self.sp.SplitHorizontally(self.graph,self.gui,470)
         
@@ -91,18 +93,27 @@ class frame(wx.Frame):
     #submits number of DAQ
     def submit(self,event):
         global numDaq
+        global numChannel
         numDaq = self.txtDaqNum.GetValue()
+        
         #makes a deque for each of the channels (each daq I'm using has 8)
-        for i in range(0, (int(numDaq))*8):
-            data.append(deque([]))
+        try:
+            
+            for i in range(0, (int(numDaq))*numChannel):
+                data.append(deque([]))
 
-        #removes button and disable changing the txtbox to keep the user from trying to re-submit
-        self.btnSubmit.Destroy()
-        self.txtDaqNum.SetEditable(False)
+            #removes button and disable changing the txtbox to keep the user from trying to re-submit
+            self.btnSubmit.Destroy()
+            self.txtDaqNum.SetEditable(False)
 
-        #starts or stops timer (timer goes off when add point)
-        self.btnStart = wx.Button(self.gui,-1,"Start/Stop", size=(80,40),pos=(50,10))
-        self.btnStart.Bind(wx.EVT_BUTTON,self.startStop)
+            #starts or stops timer (timer goes off when add point)
+            self.btnStart = wx.Button(self.gui,-1,"Start/Stop", size=(80,40),pos=(50,10))
+            self.btnStart.Bind(wx.EVT_BUTTON,self.startStop)
+
+        except ValueError:
+            print "Plese only input numbers" 
+        
+       
 
     #writes to digipot and then reads to make sure changed.  result printed
     def toDigipot(self, event, valToWrite):
@@ -116,11 +127,22 @@ class frame(wx.Frame):
                print line
 
         except ValueError:
-            print "Plese only input numbers"        
+            print "Plese only input numbers"          
 
-    #plots graph
-    def plot(self,event):
-        self.graph.plot()  
+    #starts or stops the timer
+    def startStop(self,event):
+	global isPaused
+	global timerInterval
+
+	if(isPaused):
+        	self.timer.Start(timerInterval)
+		isPaused = False
+		print "start"   
+	else:
+		self.timer.Stop() 
+		isPaused = True
+		print "stop"
+
 
     #when timer goes off
     def addPoint(self, event):
@@ -148,44 +170,22 @@ class frame(wx.Frame):
             if(numPoints > maxPoints):
                 xLocations.popleft() 
                 for line in proc.stdout:
-                    #print line
                     data[currentChannel].append(line)
-
             	    data[currentChannel].popleft()
-
             	    currentChannel +=1
 
-                    #print data[currentChannel]
             else:
                 for line in proc.stdout:
-                    #print line
                     data[currentChannel].append(line)
                     currentChannel +=1
 
-                
-
         except:
-            print "Error"
-
+            print "Error getting data"
 	       
 
 	numPoints += 1
 
 	self.graph.plot()
-
-    #starts or stops the timer
-    def startStop(self,event):
-	global isPaused
-	global timerInterval
-
-	if(isPaused):
-        	self.timer.Start(timerInterval)
-		isPaused = False
-		print "start"   
-	else:
-		self.timer.Stop() 
-		isPaused = True
-		print "stop"
 
 
 
@@ -197,9 +197,8 @@ class graph(wx.Panel):
         self.figure = plt.figure()
          
         self.canvas = FigureCanvas(self,-1, self.figure)
-        self.toolbar = NavigationToolbar(self.canvas)
-        self.toolbar.Hide()
-     
+
+    #makes subplot and grpahs data 
     def plot(self):
 
         global xLocations
@@ -210,6 +209,8 @@ class graph(wx.Panel):
 	ax.set_ylabel('Volts')
 
 	ax.set_title('DAQ Data')
+
+	#removes whitespace along x axis
 	plt.autoscale(enable=True, axis='x', tight=True)
 
 	#print xLocations
@@ -220,7 +221,7 @@ class graph(wx.Panel):
                 lines = ax.plot(xLocations, data[i], '*-', label=str(i+1))
             
         except:
-            print "error"
+            print "error graphing data"
         
         #makes key for graph
         plt.legend(bbox_to_anchor=(1,1), loc=2, borderaxespad=0., fontsize = 10, title="Data")

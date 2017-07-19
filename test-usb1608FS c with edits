@@ -40,20 +40,24 @@ int toContinue()
   return ( answer == 'y' || answer == 'Y');
 }
 
+
 int main (int argc, char *argv[]) 
 {
   int flag;
   signed short svalue;
   uint8_t channel, gain;
-  int i;//,temp,j;
+  int i;
 
   libusb_device_handle *udev;
 
   int ret;
   Calibration_AIN table_AIN[NGAINS_USB1608FS][NCHAN_USB1608FS];
 
+  /*Keeps track of how many DAQ's to skip over 
+  (once finds one this decreases and loops, so finds all DAQ)*/
   int toSkip;
    
+  //gets what value the user put in an sets toSkip to equal it (default 0)
   if(argv[1] != NULL){
   	toSkip = atoi(argv[1]);
   } else {
@@ -66,15 +70,17 @@ int main (int argc, char *argv[])
    exit(1);
   }
 
-
+  //sets gain, using default
   gain = BP_10_00V;
 
   flag = fcntl(fileno(stdin), F_GETFL);
   fcntl(0, F_SETFL, flag | O_NONBLOCK);
 
+  //find DAQ's and prints out data
   int q;
   for(q=0; q<= toSkip ; q+=1){
   	
+	//finds all USB-1608FS' that are connected
   	if ((udev = usb_device_find_more_USB_MCC(USB1608FS_PID, NULL, q))) {
    	   //printf("USB-1608FS Device is found in loop!\n");
   	} else {
@@ -88,7 +94,7 @@ int main (int argc, char *argv[])
       
   	usbDConfigPort_USB1608FS(udev, DIO_DIR_OUT);
 
-
+	//prints out data for each channel of current DAQ
   	for(i=0;i<8;i++){
      		channel = i;
      		usbDOut_USB1608FS(udev, 0);
