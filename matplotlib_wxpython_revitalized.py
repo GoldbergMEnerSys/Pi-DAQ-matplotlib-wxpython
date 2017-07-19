@@ -48,6 +48,7 @@ numDaq = 0
 global numChannel
 numChannel = 8
 
+#number of tabs on the window
 global numTab
 numTab = 1
 
@@ -70,8 +71,7 @@ class frame(wx.Frame):
         self.timer=wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.addPoint)
 
-
-        
+        #notebook holds the tabs
         self.notebook=myNotebook(self.gui)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -127,51 +127,54 @@ class myNotebook(wx.Notebook):
     def __init__(self,parent):
         wx.Notebook.__init__(self,parent)
 
-        self.tabDeque = deque([])
-
+        #adds initial tab
         tab1 = myTab(self)
         self.AddPage(tab1, "Tab 1")
 
-        #self.tabDeque.append(tab1)
-
-        #tab2 = myTab(self)
-
-
+        #if the user switches the tab, OnPageChanging() will run
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self.OnPageChanging)
 
+    #saves current data and sets graph to data on new tab
     def OnPageChanging(self, event):
 
         try:
+            #the tab being changed to
             newTab = event.EventObject.GetChildren()[event.Selection]
+            #the tab comming from
             oldTab = event.EventObject.GetChildren()[event.OldSelection]
+            
             global data
             global xLocations
             global numPoints
             global numDaq
             global isPaused
 
-            #print "this is good. " + str(oldTab)+" -> " + str(newTab.GetName)
-
+            #saves current graph in the old tab's data
             oldTab.tabData = data
             oldTab.tabXLocations = xLocations
             oldTab.tabNumPoints = numPoints
             oldTab.tabNumDaq = numDaq
 
+            #tells graph what data it should currently have
             data = newTab.tabData
             xLocations = newTab.tabXLocations
             numPoints = newTab.tabNumPoints
             numDaq = newTab.tabNumDaq
 
+            #stops timer
             frame.timer.Stop()
             isPaused = True
             print "stop"
 
+            #updates graph
             frame.graph.plot()
 
+            #updates gui
             event.Skip()
 
         except:
             print "error or prgram quit"
+            #when the user closes out of the program an error occurs becuase it think tab is changing to -1 (I think)
         
 
 
@@ -210,7 +213,7 @@ class myTab(wx.Panel):
         self.btnDigipot = wx.Button(self, label = "Send to Digipot", size = (110,40), pos = (400, 10))
         self.btnDigipot.Bind(wx.EVT_BUTTON, lambda event: self.toDigipot(wx.EVT_BUTTON, self.txtDigipot.GetValue()), self.btnDigipot)
 
-	#adds new tab
+	#a button to tell the notebook to add a new tab
         self.btnNewTab = wx.Button(self,-1,"New Tab", size=(80,40),pos=(10,10))
         self.btnNewTab.Bind(wx.EVT_BUTTON,self.newTab)
          
@@ -230,6 +233,7 @@ class myTab(wx.Panel):
     def submit(self,event):
         global numDaq
         global numChannel
+        
         numDaq = self.txtDaqNum.GetValue()
         
         #makes a deque for each of the channels (each daq I'm using has 8)
