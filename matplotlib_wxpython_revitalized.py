@@ -22,7 +22,7 @@ isPaused = True
 
 #interval between adding points
 global timerInterval
-timerInterval = 3000
+timerInterval = 2500
 
 #a deque of the x coordinates for the data
 global xLocations
@@ -173,7 +173,7 @@ class myNotebook(wx.Notebook):
             event.Skip()
 
         except:
-            print "error or prgram quit"
+            print "Error or the prgram quit"
             #when the user closes out of the program an error occurs becuase it think tab is changing to -1 (I think)
         
 
@@ -304,7 +304,7 @@ class graph(wx.Panel):
         ax.set_xlabel('Time')
         ax.set_ylabel('Volts')
 
-        ax.set_title('DAQ Data')
+        ax.set_title('USB-1608FS DAQ Data')
 
 	#removes whitespace along x axis
         plt.autoscale(enable=True, axis='x', tight=True)
@@ -312,15 +312,19 @@ class graph(wx.Panel):
 	#print xLocations
 
         #makes lines based on the deques
-        if True: #try:
+        try:
             for i in range(0, (int(numDaq))*8):
                 lines = ax.plot(xLocations, data[i], '*-', label=str(i+1))
             
-        #except:
-            #print "error graphing data"
+        except:
+            print "error graphing data"
+
+        try:
+            #makes key for graph
+            plt.legend(bbox_to_anchor=(1,1), loc=2, borderaxespad=0., fontsize = 10, title="Data")
+        except:
+            print "Can't make key right now"
         
-        #makes key for graph
-        plt.legend(bbox_to_anchor=(1,1), loc=2, borderaxespad=0., fontsize = 10, title="Data")
             
         self.canvas.draw()
 
@@ -334,6 +338,6 @@ class graph(wx.Panel):
 
 #controlling code
 app = wx.App(redirect=False)
-frame = frame(None,"DAQ Data Chart")
+frame = frame(None,"USB-1608FS DAQ Data Chart")
 frame.Show()
 app.MainLoop()
