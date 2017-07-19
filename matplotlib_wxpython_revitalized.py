@@ -25,7 +25,7 @@ isPaused = True
 
 #interval between adding points
 global timerInterval
-timerInterval = 2500
+timerInterval = 2250
 
 #a deque of the x coordinates for the data
 global xLocations
@@ -45,7 +45,7 @@ numDaq = 0
 
 #number of points per line before start removing oldest ones
 global maxPoints
-maxPoints = 10
+maxPoints = 100
 
 #main frame of program (whole interface including graph) 
 class frame(wx.Frame):
@@ -144,25 +144,30 @@ class frame(wx.Frame):
         #puts data in data deque (also removes if too many)
         try:
             currentChannel = 0
-        
-            for line in proc.stdout:
-                #print line
-                data[currentChannel].append(line)
 
-                if(numPoints > maxPoints):
+            if(numPoints > maxPoints):
+                xLocations.popleft() 
+                for line in proc.stdout:
+                    #print line
+                    data[currentChannel].append(line)
+
             	    data[currentChannel].popleft()
 
-                #print data[currentChannel]
+            	    currentChannel +=1
 
-                currentChannel +=1
+                    #print data[currentChannel]
+            else:
+                for line in proc.stdout:
+                    #print line
+                    data[currentChannel].append(line)
+                    currentChannel +=1
+
+                
 
         except:
-            print "error: somethihng or other"
+            print "Error"
 
-
-        #removes x coordinate if too many
-        if(numPoints > maxPoints):
-	    xLocations.popleft()    
+	       
 
 	numPoints += 1
 
@@ -210,20 +215,24 @@ class graph(wx.Panel):
 	#print xLocations
 
         #makes lines based on the deques
+	try:
         for i in range(0, (int(numDaq))*8):
-            lines = ax.plot(xLocations, data[i], '*-', label='line')
-
+            lines = ax.plot(xLocations, data[i], '*-', label=str(i+1))
+            
+        except:
+            print "error"
+        
         #makes key for graph
-        plt.legend()
+        plt.legend(bbox_to_anchor=(1,1), loc=2, borderaxespad=0., fontsize = 10, title="Data")
             
         self.canvas.draw()
 
         #clears lines in axis so still see old lines below new ones
         ax.cla()
 
-	#myLines=lines.pop(0)
+	'''myLines=lines.pop(0)
 	#myLines.remove()
-	#del myLines    
+	#del myLines'''    
    
 
 #controlling code

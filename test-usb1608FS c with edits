@@ -67,10 +67,48 @@ int main (int argc, char *argv[])
   }
 
 
+  gain = BP_10_00V;
+
+  flag = fcntl(fileno(stdin), F_GETFL);
+  fcntl(0, F_SETFL, flag | O_NONBLOCK);
+
   int q;
   for(q=0; q<= toSkip ; q+=1){
+  	
+  	if ((udev = usb_device_find_more_USB_MCC(USB1608FS_PID, NULL, q))) {
+   	   //printf("USB-1608FS Device is found in loop!\n");
+  	} else {
+    	  //printf("No device found.\n");
+    	  exit(0);
+  	}
+  
+ 
+  	usbBuildCalTable_USB1608FS(udev, table_AIN);
+     
+      
+  	usbDConfigPort_USB1608FS(udev, DIO_DIR_OUT);
 
-        //printf("q= %i\n", q);
+
+  	for(i=0;i<8;i++){
+     		channel = i;
+     		usbDOut_USB1608FS(udev, 0);
+     		//svalue = usbAIn_USB1608FS(udev, channel, gain, table_AIN);
+     		//usbDOut_USB1608FS(udev, 0x2);
+     		svalue = usbAIn_USB1608FS(udev, channel, gain, table_AIN);
+     		printf("%.4f\n",
+     		volts_USB1608FS(gain, svalue));
+  	}
+   	//printf("swhy %i \n", q);
+   }
+	//} while (!isalpha(getchar()));
+        //fcntl(fileno(stdin), F_SETFL, flag);
+	//break;
+
+//*************comented out code*******************************
+
+
+
+//printf("q= %i\n", q);
 
   	//udev = 0;
   	//udev2 = 0;
@@ -90,43 +128,6 @@ int main (int argc, char *argv[])
   	}*/
 
   	//printf("noyt hanted\n");
-
-  
-  	
-  	if ((udev = usb_device_find_more_USB_MCC(USB1608FS_PID, NULL, q))) {
-   	   //printf("USB-1608FS Device is found in loop!\n");
-  	} else {
-    	  //printf("No device found.\n");
-    	  exit(0);
-  	}
-  
- 
-  	usbBuildCalTable_USB1608FS(udev, table_AIN);
-
-      
-  	gain = BP_10_00V;
-      
-  	flag = fcntl(fileno(stdin), F_GETFL);
-  	fcntl(0, F_SETFL, flag | O_NONBLOCK);
-  	usbDConfigPort_USB1608FS(udev, DIO_DIR_OUT);
-
-
-  	for(i=0;i<8;i++){
-     		channel = i;
-     		usbDOut_USB1608FS(udev, 0);
-     		svalue = usbAIn_USB1608FS(udev, channel, gain, table_AIN);
-     		usbDOut_USB1608FS(udev, 0x2);
-     		svalue = usbAIn_USB1608FS(udev, channel, gain, table_AIN);
-     		printf("%.4f\n",
-     		volts_USB1608FS(gain, svalue));
-  	}
-   	//printf("swhy %i \n", q);
-   }
-	//} while (!isalpha(getchar()));
-        //fcntl(fileno(stdin), F_SETFL, flag);
-	//break;
-
-//*************comented out code*******************************
 
 
   //while(1) {
