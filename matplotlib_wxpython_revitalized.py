@@ -25,7 +25,7 @@ isPaused = True
 
 #interval between adding points
 global timerInterval
-timerInterval = 2250
+timerInterval = 2500
 
 #a deque of the x coordinates for the data
 global xLocations
@@ -216,8 +216,8 @@ class graph(wx.Panel):
 
         #makes lines based on the deques
 	try:
-        for i in range(0, (int(numDaq))*8):
-            lines = ax.plot(xLocations, data[i], '*-', label=str(i+1))
+            for i in range(0, (int(numDaq))*8):
+                lines = ax.plot(xLocations, data[i], '*-', label=str(i+1))
             
         except:
             print "error"
