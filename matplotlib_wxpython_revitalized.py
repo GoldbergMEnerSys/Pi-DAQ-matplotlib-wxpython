@@ -4,7 +4,6 @@ M Goldberg at EnerSys
 Help from Mr. Venus 
 """
  
- 
 #this imports wx python 
 import wx
 
@@ -121,6 +120,9 @@ class frame(wx.Frame):
 
         frame.graph.plot()
 
+        #update tab images
+        self.notebook.OnTimerImg()
+
 
 #collection of tabs
 class myNotebook(wx.Notebook):
@@ -130,6 +132,12 @@ class myNotebook(wx.Notebook):
         #adds initial tab
         tab1 = myTab(self)
         self.AddPage(tab1, "Tab 1")
+
+        #makes list of images
+        imgList = wx.ImageList(16,16)
+        #adds a random picture of a red square from the internet (change to better pic once have one)
+        self.img0 = imgList.Add(wx.Bitmap('/home/pi/Desktop/FF0000.png', wx.BITMAP_TYPE_PNG))
+        self.AssignImageList(imgList)
 
         #if the user switches the tab, OnPageChanging() will run
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self.OnPageChanging)
@@ -175,6 +183,10 @@ class myNotebook(wx.Notebook):
         except:
             print "Error or the prgram quit"
             #when the user closes out of the program an error occurs becuase it think tab is changing to -1 (I think)
+
+    #checks to see if tab images need to be updated
+    def OnTimerImg(self):
+        self.SetPageImage(0, self.img0)
         
 
 
