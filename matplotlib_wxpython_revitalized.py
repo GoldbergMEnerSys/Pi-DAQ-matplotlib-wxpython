@@ -44,7 +44,7 @@ global activeTab
 #main frame of program (whole interface including graph) 
 class frame(wx.Frame):
     def __init__(self,parent,title):
-        wx.Frame.__init__(self,parent,title=title,size=(650,600), style=wx.MINIMIZE_BOX|wx.SYSTEM_MENU|
+        wx.Frame.__init__(self,parent,title=title,size=(800,600), style=wx.MINIMIZE_BOX|wx.SYSTEM_MENU|
                   wx.CAPTION|wx.CLOSE_BOX|wx.CLIP_CHILDREN)
 
 	#makes two panels, one for interface and one for graph
@@ -210,11 +210,19 @@ class myTab(wx.Panel):
         self.btnSubmit.Bind(wx.EVT_BUTTON,self.submit)
 
 	#text box for user to insert what to set digipot to
-        self.txtDigipot = wx.TextCtrl(self, size =(100,40), pos = (515,10))
+        self.txtDigipot = wx.TextCtrl(self, size =(50,40), pos = (515,10))
 
         #button to submit data in txtDigipot to digipot
         self.btnDigipot = wx.Button(self, label = "Send to Digipot", size = (110,40), pos = (400, 10))
         self.btnDigipot.Bind(wx.EVT_BUTTON, lambda event: self.toDigipot(wx.EVT_BUTTON, self.txtDigipot.GetValue()), self.btnDigipot)
+
+        #text box for user to insert what to set DAC to
+        self.txtDac = wx.TextCtrl(self, size =(50,40), pos = (700,10))
+
+        #button to submit data in txtDac to DAC
+        self.btnDac = wx.Button(self, label = "Send to DAC", size = (110,40), pos = (585, 10))
+        self.btnDac.Bind(wx.EVT_BUTTON, lambda event: self.toDac(wx.EVT_BUTTON, self.txtDac.GetValue()), self.btnDac)
+
 
 	#a button to tell the notebook to add a new tab
         self.btnNewTab = wx.Button(self,-1,"New Tab", size=(80,40),pos=(5,10))
@@ -267,6 +275,23 @@ class myTab(wx.Panel):
         except ValueError:
             print "Plese only input numbers"          
 
+    #writes to dac and then reads to make sure changed.  result printed
+    def toDac(self, event, valToWrite):
+
+        #writes to digipot and prints out what it was set to
+        try:
+            int(valToWrite)
+            proc = subprocess.Popen("./i2cDAC %s"%valToWrite, shell = True, stdout=subprocess.PIPE)
+
+            print "Recieved"
+
+            #for line in proc.stdout:
+               #print line
+
+        except ValueError:
+            print "Plese only input numbers"  
+
+
     #starts or stops the timer
     def startStop(self,event):
         global isPaused
@@ -294,7 +319,7 @@ class graph(wx.Panel):
 
     def __init__(self,parent):
         wx.Panel.__init__(self, parent)
-        self.figure = plt.figure()
+        self.figure = plt.figure(figsize=(10,6))
          
         self.canvas = FigureCanvas(self,-1, self.figure)
 
