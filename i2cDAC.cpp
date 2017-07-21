@@ -21,8 +21,14 @@ int main(int argc, char *argv[])
 
    fd = wiringPiI2CSetup(0x29);
 
-   set = wiringPiI2CWriteReg8(fd, 0xaf, numValue);
- 
+
+   //for(int i=0;i<100;i++){
+   set = wiringPiI2CWriteReg8(fd, 0x00, 0xFF);
+   set = wiringPiI2CWriteReg8(fd, 0x00, 0xFF);
+   set = wiringPiI2CWriteReg8(fd, 0x01, 0xFF);
+   set = wiringPiI2CWriteReg8(fd, 0x02, 0xFF);
+   set = wiringPiI2CWriteReg8(fd, 0x03, 0xFF);
+   //}
 
    if(set == -1)
    {
@@ -43,8 +49,30 @@ int main(int argc, char *argv[])
       }*/
    }
 
+   //set = wiringPiI2CWriteReg8(fd, 0xFF, numValue);
+   //set = wiringPiI2CWrite(fd, numValue);
 
-   result = wiringPiI2CRead(fd);
+   //if(set == -1)
+   //{
+      //cout << "Error.  Errno is: " << errno << endl;
+
+      /*fd = wiringPiI2CSetup(0x2f);
+      set = wiringPiI2CWriteReg8(fd, 0xaf, numValue);
+      if(set == -1)
+      {
+
+	fd = wiringPiI2CSetup(0x2e);
+      	set = wiringPiI2CWriteReg8(fd, 0xaf, numValue);
+      	if(set == -1)
+      	{
+	}
+	
+
+      }*/
+   //}
+
+
+   /*result = wiringPiI2CRead(fd);
 
    if(result == -1)
    {
@@ -52,7 +80,7 @@ int main(int argc, char *argv[])
    }
    else {
 	cout <<result<<endl;
-   }
+   }*/
    
 }
 
